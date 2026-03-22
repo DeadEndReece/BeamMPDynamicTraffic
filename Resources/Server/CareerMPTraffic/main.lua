@@ -34,7 +34,6 @@ local Config = {
   
   msgAdminRefreshWait = "^l^e[Traffic] ^fAdmin %s forced a traffic refresh. ^cRespawning in %d seconds...",
   msgNoPermission     = "^l^cYou do not have permission to use admin commands.",
-  
 }
 
 -- ================================
@@ -397,23 +396,8 @@ function onChatMessage(senderId, senderName, message)
               local num = tonumber(args[3])
               if num and num >= 1 then
                   Config.aisPerPlayer = math.floor(num)
-                  MP.SendChatMessage(senderId, "^l^cMax AI per player updated to: " .. Config.aisPerPlayer)
+                  MP.SendChatMessage(senderId, "^l^cMax AI per player updated to: " .. Config.aisPerPlayer .. ". Use ^b/traffic refresh ^cwhen ready.")
                   logInfo(senderName .. " changed maxaipp to " .. Config.aisPerPlayer)
-                  
-                  local amount = getScaledTrafficAmount(false)
-                  firstPlayerSpawning = false
-                  isCountingDown = false
-                  trafficPaused = false
-                  serverHasTraffic = true
-
-                  recalcSpawning = true
-                  recalcTimer = os.time() + Config.timerAdminRefresh
-                  recalcAmount = amount
-                  recalc5sWarning = false
-
-                  MP.TriggerClientEvent(-1, "setTrafficAmount", "0")
-                  MP.TriggerClientEvent(-1, "deleteTraffic", "")
-                  MP.SendChatMessage(-1, string.format(Config.msgAdminRefreshWait, senderName, Config.timerAdminRefresh))
               else
                   MP.SendChatMessage(senderId, "^l^cUsage: /traffic maxaipp <number> (Must be 1 or higher)")
               end
@@ -427,23 +411,8 @@ function onChatMessage(senderId, senderName, message)
               local num = tonumber(args[3])
               if num and num >= 1 then
                   Config.maxServerTraffic = math.floor(num)
-                  MP.SendChatMessage(senderId, "^l^cMax total server traffic updated to: " .. Config.maxServerTraffic)
+                  MP.SendChatMessage(senderId, "^l^cMax total server traffic updated to: " .. Config.maxServerTraffic .. ". Use ^b/traffic refresh ^cwhen ready.")
                   logInfo(senderName .. " changed maxtraffic to " .. Config.maxServerTraffic)
-                  
-                  local amount = getScaledTrafficAmount(false)
-                  firstPlayerSpawning = false
-                  isCountingDown = false
-                  trafficPaused = false
-                  serverHasTraffic = true
-
-                  recalcSpawning = true
-                  recalcTimer = os.time() + Config.timerAdminRefresh
-                  recalcAmount = amount
-                  recalc5sWarning = false
-
-                  MP.TriggerClientEvent(-1, "setTrafficAmount", "0")
-                  MP.TriggerClientEvent(-1, "deleteTraffic", "")
-                  MP.SendChatMessage(-1, string.format(Config.msgAdminRefreshWait, senderName, Config.timerAdminRefresh))
               else
                   MP.SendChatMessage(senderId, "^l^cUsage: /traffic maxtraffic <number> (Must be 1 or higher)")
               end
@@ -625,22 +594,7 @@ function onConsoleTrafficInput(cmd)
             local num = tonumber(args[2])
             if num and num >= 1 then
                 Config.aisPerPlayer = math.floor(num)
-                logInfo("Max AI per player updated to: " .. Config.aisPerPlayer)
-                
-                -- Trigger Global Refresh
-                local amount = getScaledTrafficAmount(false)
-                firstPlayerSpawning = false
-                isCountingDown = false
-                trafficPaused = false
-                serverHasTraffic = true
-                recalcSpawning = true
-                recalcTimer = os.time() + Config.timerAdminRefresh
-                recalcAmount = amount
-                recalc5sWarning = false
-                
-                MP.TriggerClientEvent(-1, "setTrafficAmount", "0")
-                MP.TriggerClientEvent(-1, "deleteTraffic", "")
-                MP.SendChatMessage(-1, string.format(Config.msgAdminRefreshWait, "Server Console", Config.timerAdminRefresh))
+                logInfo("Max AI per player updated to: " .. Config.aisPerPlayer .. ". (Use /traffic refresh in-game to apply)")
             else
                 logInfo("Usage: traffic.maxaipp <number> (Must be 1 or higher)")
             end
@@ -655,22 +609,7 @@ function onConsoleTrafficInput(cmd)
             local num = tonumber(args[2])
             if num and num >= 1 then
                 Config.maxServerTraffic = math.floor(num)
-                logInfo("Max total server traffic updated to: " .. Config.maxServerTraffic)
-                
-                -- Trigger Global Refresh
-                local amount = getScaledTrafficAmount(false)
-                firstPlayerSpawning = false
-                isCountingDown = false
-                trafficPaused = false
-                serverHasTraffic = true
-                recalcSpawning = true
-                recalcTimer = os.time() + Config.timerAdminRefresh
-                recalcAmount = amount
-                recalc5sWarning = false
-                
-                MP.TriggerClientEvent(-1, "setTrafficAmount", "0")
-                MP.TriggerClientEvent(-1, "deleteTraffic", "")
-                MP.SendChatMessage(-1, string.format(Config.msgAdminRefreshWait, "Server Console", Config.timerAdminRefresh))
+                logInfo("Max total server traffic updated to: " .. Config.maxServerTraffic .. ". (Use /traffic refresh in-game to apply)")
             else
                 logInfo("Usage: traffic.maxtraffic <number> (Must be 1 or higher)")
             end
@@ -702,5 +641,3 @@ local function initExistingPlayers()
   logInfo("Server module loaded successfully. Existing players grandfathered in.")
 end
 initExistingPlayers()
-
-
