@@ -1,10 +1,3 @@
-Here is the updated `README.md` reflecting all the massive improvements we just made. 
-
-I have completely removed the outdated references to hardcoding usernames in the config and replaced them with a dedicated section explaining your new, highly secure BeamMP ID authentication system and console commands.
-
-### The Updated README
-
-```markdown
 # CareerMP Dynamic AI Traffic 🚗🚦
 
 Welcome to the **CareerMP Dynamic AI Traffic** script! This custom server and client package brings highly stable, dynamically scaling AI traffic to your BeamMP / CareerMP servers. 
@@ -47,36 +40,34 @@ Because multiplayer syncing is heavy, the script uses timers to pause traffic ge
   * `%d` is automatically replaced with a **Number** (like seconds remaining, or the amount of cars spawned).
 
 #### 🚦 Initial Server Startup Messages
-* **`msgFirstPlayerWait`** * *Default:* `^l^e[Traffic] ^fFirst player loaded! - Traffic will generate in ^c%d seconds...`
+* **`msgFirstPlayerWait`**
   * *Trigger:* When the first player spawns in, starting the initial waiting room timer.
-* **`msgPendingPlayer`** * *Default:* `^l^e[Traffic] ^f%s is downloading/loading! Pausing traffic spawn...`
+* **`msgPendingPlayer`** 
   * *Trigger:* If another player starts joining, putting the initial traffic spawn on hold.
-* **`msgExtendTimer`** * *Default:* `^l^e[Traffic] ^fAnother player is loading in! Delaying traffic generation by ^c%d seconds...`
+* **`msgExtendTimer`** 
   * *Trigger:* If the waiting room timer is already active and another player starts joining, extending the delay.
-* **`msgFirstPlayer5s`** * *Default:* `^l^e[Traffic] ^fTraffic generating in ^c5 seconds...`
+* **`msgFirstPlayer5s`** 
   * *Trigger:* The 5-second warning before the initial traffic spawns.
 
 #### 🔄 Dynamic Scaling & Queue Messages
-* **`msgPlayerJoinWait`** * *Default:* `^l^e[Traffic] ^f%s Joined - Traffic has been ^cDeleted ^fwhilst the server ^crecalculates!`
+* **`msgPlayerJoinWait`** 
   * *Trigger:* When a new player joins an active server, immediately deleting existing traffic and starting the recalculation timer.
-* **`msgPlayerJoinReset`** * *Default:* `^l^e[Traffic] ^f%s Joined! - Traffic Spawning ^cCancelled ^fand ^crecalculating.`
+* **`msgPlayerJoinReset`** 
   * *Trigger:* If a new player joins while a spawn countdown is *already* happening, resetting the queue.
-* **`msgPlayerLeaveWait`** * *Default:* `^l^e[Traffic] ^fA player left. - Traffic ^cDeleted. ^fRespawning in ^c%d seconds...`
+* **`msgPlayerLeaveWait`** 
   * *Trigger:* When a player leaves, clearing traffic and starting the respawn countdown for the new limits.
-* **`msgQueue1Min`** * *Default:* `^l^e[Traffic] ^fTraffic Recalculated, Respawning in 1 min.`
+* **`msgQueue1Min`**  
   * *Trigger:* The 60-second warning during a recalculation queue.
-* **`msgQueue5s`** * *Default:* `^l^e[Traffic] ^fRespawning traffic in ^c5 seconds... Find a safe location!`
+* **`msgQueue5s`** 
   * *Trigger:* The 5-second warning before recalculated traffic spawns.
-* **`msgTrafficSpawned`** * *Default:* `^l^e[Traffic] ^fTraffic spawned ^c(%d per player).`
+* **`msgTrafficSpawned`** 
   * *Trigger:* Announcement that traffic has successfully spawned, showing the active amount per player.
 
 #### 👑 Admin Messages
-* **`msgAdminRefreshWait`** * *Default:* `^l^e[Traffic] ^fAdmin %s forced a traffic refresh. ^cRespawning in %d seconds...`
+* **`msgAdminRefreshWait`** 
   * *Trigger:* When an admin forces a refresh or changes a setting, starting the refresh countdown.
-* **`msgNoPermission`** * *Default:* `^l^cYou do not have permission to use admin commands.`
+* **`msgNoPermission`**
   * *Trigger:* Error message sent privately to a player who attempts to use an admin-only command.
-
-
 
 ## 🛠️ 2. IMPORTANT: Modifying CareerMP Core (`PlayerDriving.lua`)
 For this dynamic scaling script to work properly, you **MUST** edit a core file inside the original CareerMP mod. If you skip this step, CareerMP will completely ignore our script and permanently lock your traffic to exactly 2 cars!
@@ -130,7 +121,4 @@ These commands are typed directly into the black server console window:
 * **`/traffic maxtraffic <number>`**: Change the hard cap for total AI on the server. Triggers a server refresh.
 * **`/traffic ghosting <on|off>`**: Toggle AI collisions. Triggers a massive on-screen UI message (Red for ON, Green for OFF) for all connected players.
 * **`/traffic help`**: Displays a quick list of available in-game traffic commands.
-<<<<<<< Updated upstream
-```
-=======
->>>>>>> Stashed changes
+
