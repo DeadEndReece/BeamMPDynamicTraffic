@@ -8,7 +8,7 @@
 local Config = {
   aisPerPlayer = 1, -- Maximum AI vehicles per player (e.g., 4 means 4 AI per player, so 2 players = 8 AI)
   maxServerTraffic = 8, -- Absolute cap on total AI vehicles regardless of player count (e.g., 8 means no more than 8 AI on the server at once)
-  trafficGhosting     = true -- Toggle for anti-explosion protection (False = cars are solid, True = cars will pass through players)
+  trafficGhosting     = true, -- Toggle for anti-explosion protection (False = cars are solid, True = cars will pass through players)
 
   -- Timers (in seconds)
   timerFirstPlayer  = 30, -- Time to wait after the first player spawns before generating traffic (if no one else is loading)
