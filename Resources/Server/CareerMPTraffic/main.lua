@@ -6,7 +6,7 @@
 -- CONFIGURATION
 -- ==========================================
 local Config = {
-  aisPerPlayer = 1, -- Maximum AI vehicles per player (e.g., 4 means 4 AI per player, so 2 players = 8 AI)
+  aisPerPlayer = 1, -- Maximum AI vehicles per player (e.g., 1 means 1 AI per player, so 5 players = 5 AI)
   maxServerTraffic = 8, -- Absolute cap on total AI vehicles regardless of player count (e.g., 8 means no more than 8 AI on the server at once)
   trafficGhosting     = true, -- Toggle for anti-explosion protection (False = cars are solid, True = cars will pass through players)
 
