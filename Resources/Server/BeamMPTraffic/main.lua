@@ -1,4 +1,4 @@
--- CareerMP Dynamic AI Traffic - Server/Client Module
+-- BeamMP Dynamic AI Traffic - Server/Client Module
 -- Author: DeadEndReece
 -- Description: This script manages dynamic traffic spawning based on player count, with a waiting room mechanism to ensure the first player has fully loaded before traffic spawns. 
 -- Version: 0.1 - Github.com/DeadEndReece | Forum.beammp.com/u/DeadEndReece
@@ -46,7 +46,7 @@ local Config = {
 -- =====================================================================
 -- INTERNAL STATES & DATA DONT TOUCH UNLESS YOU KNOW WHAT YOU ARE DOING!
 -- =====================================================================
-local settingsPath = "Resources/Server/CareerMPTraffic/settings.txt"
+local settingsPath = "Resources/Server/BeamMPTraffic/settings.txt"
 local TRAFFIC_ADMINS = {}
 
 local pendingPlayers = {} 
@@ -70,7 +70,7 @@ local recalcAmount = 0
 local recalc5sWarning = false
 
 local function logInfo(msg)
-  print("[CareerMPTraffic] " .. tostring(msg))
+  print("[BeamMPTraffic] " .. tostring(msg))
 end
 -- ===================================
 -- SETTINGS PERSISTENCE (Unified File)
