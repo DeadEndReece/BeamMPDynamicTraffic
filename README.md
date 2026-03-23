@@ -21,6 +21,7 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 5. Edit the amount of AI in the `Settings.txt` file or by using the commands listed below!
 6. Use the server console to add your first admin (see Commands below).
 
+**NOTE**: To use this in **CareerMP** You have to edit `line 57` in CareerMP.zip `resources/client/CareerMP/lua/ge/extensions/career/modules/playerdriving.lua` From `amount = clamp(amount, 2, 2) -- at least 2 vehicles should get spawned` to `amount = clamp(amount, 1, X)` (**X** Being the max you want a player to spawn)
 
 ## ⚙️ Configuration & Timers
 
@@ -85,3 +86,5 @@ For developers looking to modify the script, here is a brief overview of the cor
 * **`onPlayerAuth()` & `onPlayerJoin()`**: Catches players as they connect and puts them in a "pending" state, pausing traffic generation.
 * **`onVehicleSpawn()`**: Acts as the confirmation trigger. When a player spawns their car, the script assumes they have finished loading and begins the traffic countdown timers.
 * **`trafficManagerTick()`**: The heartbeat loop of the script. It checks the system time against active timers and triggers chat warnings or client-side spawn events when clocks hit zero.
+
+
