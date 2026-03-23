@@ -1,124 +1,82 @@
-# CareerMP Dynamic AI Traffic 🚗🚦
+# 🚦 CareerMP Dynamic AI Traffic Module
 
-Welcome to the **CareerMP Dynamic AI Traffic** script! This custom server and client package brings highly stable, dynamically scaling AI traffic to your BeamMP / CareerMP servers. 
+A dynamic server and client module for BeamMP that intelligently manages AI traffic spawning based on active player counts. 
 
-To prevent server lag and client framerates, this script actively monitors the player count, scales the amount of traffic per person, and uses Waiting Rooms and queues to ensure cars only spawn when players are fully loaded and ready. It also features a fully dynamic Anti-Explosion "Ghost Mode" to prevent pileups!
-
-
-## ⚙️ 1. Server Configuration (`main.lua`)
-All settings for the server can be found at the very top of the `main.lua` file in the `Config` block. You do not need to edit any of the core code below this block!
-
-### Traffic Limits
-* **`aisPerPlayer`** *(Default: 4)*: The maximum number of AI cars allowed *per person* when the server is mostly empty.
-* **`maxServerTraffic`** *(Default: 8)*: The absolute hard limit of AI cars allowed on the server at one time. 
-*(Example: If Max is 8 and there are 4 players, the script automatically scales it down to 2 cars per player).*
-* **`trafficGhosting`** *(Default: true)*: Toggles whether AI are solid objects (`false`) or as pass-through "ghosts" to prevent crashes (`true`).
-
-### ⏱️ Customizing Timers
-To adjust the waiting room and queue timers, simply change the values in the `Config` table at the top of the `main.lua` script. All values are calculated in **seconds**. 
-
-* **`timerFirstPlayer`**
-  * *Example:* `Config.timerFirstPlayer = 45`
-  * *Effect:* Waits 45 seconds after the first player spawns on an empty server before generating the initial traffic.
-* **`timerPlayerJoin`**
-  * *Example:* `Config.timerPlayerJoin = 90`
-  * *Effect:* Waits 90 seconds after a new player joins an already populated server before respawning traffic for everyone.
-* **`timerPlayerLeave`**
-  * *Example:* `Config.timerPlayerLeave = 20`
-  * *Effect:* Waits 20 seconds after a player leaves the server before respawning traffic to match the new player count.
-* **`timerAdminRefresh`**
-  * *Example:* `Config.timerAdminRefresh = 15`
-  * *Effect:* Waits 15 seconds after an admin forces a server refresh before spawning the new batch of traffic.
-
-### 💬 Customizing Chat Messages
-Because multiplayer syncing is heavy, the script uses timers to pause traffic generation so players don't lag out while loading in. You can customize the announcements sent to the server for all of these events. 
-
-**Formatting Rules:**
-* Use BeamMP color codes like `^c` (Red) or `^f` (White) to style your text.
-* Do **NOT** delete the `%s` or `%d` symbols! 
-  * `%s` is automatically replaced with a **Player's Name**.
-  * `%d` is automatically replaced with a **Number** (like seconds remaining, or the amount of cars spawned).
-
-#### 🚦 Initial Server Startup Messages
-* **`msgFirstPlayerWait`**
-  * *Trigger:* When the first player spawns in, starting the initial waiting room timer.
-* **`msgPendingPlayer`** 
-  * *Trigger:* If another player starts joining, putting the initial traffic spawn on hold.
-* **`msgExtendTimer`** 
-  * *Trigger:* If the waiting room timer is already active and another player starts joining, extending the delay.
-* **`msgFirstPlayer5s`** 
-  * *Trigger:* The 5-second warning before the initial traffic spawns.
-
-#### 🔄 Dynamic Scaling & Queue Messages
-* **`msgPlayerJoinWait`** 
-  * *Trigger:* When a new player joins an active server, immediately deleting existing traffic and starting the recalculation timer.
-* **`msgPlayerJoinReset`** 
-  * *Trigger:* If a new player joins while a spawn countdown is *already* happening, resetting the queue.
-* **`msgPlayerLeaveWait`** 
-  * *Trigger:* When a player leaves, clearing traffic and starting the respawn countdown for the new limits.
-* **`msgQueue1Min`**  
-  * *Trigger:* The 60-second warning during a recalculation queue.
-* **`msgQueue5s`** 
-  * *Trigger:* The 5-second warning before recalculated traffic spawns.
-* **`msgTrafficSpawned`** 
-  * *Trigger:* Announcement that traffic has successfully spawned, showing the active amount per player.
-
-#### 👑 Admin Messages
-* **`msgAdminRefreshWait`** 
-  * *Trigger:* When an admin forces a refresh or changes a setting, starting the refresh countdown.
-* **`msgNoPermission`**
-  * *Trigger:* Error message sent privately to a player who attempts to use an admin-only command.
-
-## 🛠️ 2. IMPORTANT: Modifying CareerMP Core (`PlayerDriving.lua`)
-For this dynamic scaling script to work properly, you **MUST** edit a core file inside the original CareerMP mod. If you skip this step, CareerMP will completely ignore our script and permanently lock your traffic to exactly 2 cars!
-
-**How to fix it:**
-
-1. Open your server's mod folder and extract or open **`CareerMP.zip`**.
-2. Navigate to the following file path: 
-   `lua\ge\extensions\career\modules\playerDriving.lua`
-3. Open `playerDriving.lua` in a text editor (like Notepad++) and scroll down to **Line 57**. It will look like this:
-   ```lua
-   amount = clamp(amount, 2, 2) -- at least 2 vehicles should get spawned
-   ```
-4. **Change the numbers inside the parenthesis!** * The first number is the *minimum* AI allowed. Set this to **`1`**.
-   * The second number is the *maximum* AI per player. Set this to match whatever you put for `aisPerPlayer` in your server's `main.lua` config (You can set the second number high if you want to this is just the top cap! My example I set to **`8`**).
-5. **Your updated Line 57 should look exactly like this:**
-   ```lua
-   amount = clamp(amount, 1, 8) -- Dynamic limit allowing 1 to 8 cars
-   ```
-6. Save the file, re-zip `CareerMP.zip`, and put it back in your server!
+This script features a "waiting room" mechanism to prevent traffic from generating before players have fully loaded into the server. This drastically reduces lag spikes and synchronization crashes caused by AI spawning prematurely.
 
 
+## ✨ Features
+* **Dynamic Scaling:** Automatically divides the server's maximum traffic limit by the number of active players.
+* **Waiting Room Logic:** Pauses AI generation while players are downloading mods or syncing.
+* **Traffic Ghosting:** Optional anti-grief/anti-crash protection that disables collisions for AI vehicles.
+* **Persistent Admins:** Saves authorized traffic admins to a local `.txt` file so they survive server restarts.
 
-## 👑 3. Admin Management System
-The admin system uses secure, unique BeamMP IDs instead of easily spoofed usernames. Admins are automatically saved to `Resources/Server/CareerMPTraffic/TrafficAdmins.txt` and their usernames will auto-update in the file if they change their name in-game.
 
-### Server Console Commands (Host Only)
-These commands are typed directly into the black server console window:
+## 💾 Installation
 
-* **`traffic.au <ID> <Name>`**: Add a new admin using their BeamMP ID and Username (e.g., `traffic.au 1234567 UkDrifter`). *Do this first to give yourself access!*
-* **`traffic.ru <ID>`**: Remove an admin using their BeamMP ID.
-* **`traffic.lookup <Name>`** (or `traffic.lu`): Look up the BeamMP ID of a connected player. Generates a link to their BeamMP forum profile!
-* **`traffic.admins`**: List all current admins and their forum profile links.
-* **`traffic.status`** (or `traffic.s`): View the current server limits, active vehicle targets, and ghosting status.
-* **`traffic.maxaipp <number>`**: Change the `aisPerPlayer` config on the fly. Triggers a server refresh.
-* **`traffic.maxtraffic <number>`**: Change the `maxServerTraffic` config on the fly. Triggers a server refresh.
-* **`traffic.ghosting <on|off>`** (or `traffic.g`): Toggle AI collisions on or off. Triggers a massive on-screen UI message for all players!
-* **`traffic.help`** (or `traffic.h`): Displays the console command list.
+1. Download the `Latest` Release.
+2. Place the zip in your BeamMP Server directory.
+3. Extract and it will create the directory: `Resources/Server/CareerMPTraffic/main.lua` & `Resources/Client/CareerMPTraffic.zip`
+4. Start your server. The script will automatically generate the `TrafficAdmins.txt` file on the first run.
+5. Use the server console to add your first admin (see Commands below).
 
-## 💬 4. In-Game Chat Commands
 
-### Public Commands (For Everyone)
-* **`/mytraffic refresh`**: If a player's local traffic glitches out, gets stuck, or turns invisible, they can type this to instantly delete and respawn *only their personal traffic* without affecting the rest of the server.
+## ⚙️ Configuration & Timers
 
-### Admin Commands (In-Game)
-*(Note: You must be added as an admin via the server console first to use these)*
+All settings are located in the `Config` table at the top of `main.lua`. You can adjust these to fit your server's hardware capabilities.
 
-* **`/traffic status`**: Readout of current limits, server max, active targets, and ghosting state.
-* **`/traffic refresh`**: Forces a global wipe of all traffic on the server. Cancels queues, deletes cars, and starts the `timerAdminRefresh` countdown.
-* **`/traffic maxaipp <number>`**: Change the max AI allowed per player on the fly. Triggers a server refresh.
-* **`/traffic maxtraffic <number>`**: Change the hard cap for total AI on the server. Triggers a server refresh.
-* **`/traffic ghosting <on|off>`**: Toggle AI collisions. Triggers a massive on-screen UI message (Red for ON, Green for OFF) for all connected players.
-* **`/traffic help`**: Displays a quick list of available in-game traffic commands.
+### General Settings
+| Variable | Default | Description |
+| :--- | :---: | :--- |
+| `aisPerPlayer` | `1` | Max AI vehicles spawned per player. *(e.g., set to 2 with 3 players = 6 AI total).* |
+| `maxServerTraffic` | `8` | The absolute hard cap on AI vehicles, regardless of player count. |
+| `trafficGhosting` | `true` | Toggles collisions for AI. `true` = cars pass through players. |
 
+### Core Timers (in Seconds)
+> **Note:** `tickRate` is the only timer in milliseconds (Default: `1000` / 1 second).
+
+* **`timerFirstPlayer` (30s):** Time to wait after the *first* player fully loads before spawning initial traffic. Ensures they are fully synced.
+* **`timerPlayerJoin` (120s):** Time to wait after a *new* player joins an already populated server. Traffic is paused while they download mods.
+* **`timerPlayerLeave` (60s):** Time to wait to recalculate and respawn traffic after someone disconnects.
+* **`timerAdminRefresh` (30s):** Countdown triggered when an admin forces a manual refresh.
+* **`timerPendingTimeout` (300s):** The max time a player can be stuck on the loading screen before the script ignores them and resumes traffic.
+
+### Warning Timers (in Seconds)
+* **`timerWarningLong` (60s):** Triggers a chat warning 60 seconds before traffic spawns.
+* **`timerWarningShort` (10s):** Triggers a final *"Find a safe location!"* chat warning 10 seconds before traffic drops.
+
+
+## 💻 Commands
+
+### In-Game Chat Commands
+*Note: Admin commands require the user to be added via the server console first.*
+
+| Command | Permission | Description |
+| :--- | :---: | :--- |
+| `/mytraffic refresh` | **All Players** | Deletes and respawns the player's local traffic pool if it gets bugged. |
+| `/traffic status` | Admin | Shows current max AI, player cap, and ghosting status. |
+| `/traffic refresh` | Admin | Deletes current traffic and starts a fresh 30-second recalculation timer. |
+| `/traffic maxaipp <num>` | Admin | Changes the maximum AI allowed per player. |
+| `/traffic maxtraffic <num>`| Admin | Changes the absolute global AI cap for the server. |
+| `/traffic ghosting <on/off>`| Admin | Dynamically toggles AI collisions on or off for all players. |
+
+### Server Console Commands
+Admin management and player lookups are handled securely via the server console.
+
+| Command | Description |
+| :--- | :--- |
+| `traffic.help` | Lists all available console commands. |
+| `traffic.au <ID> <Name>` | Adds a new Admin using their BeamMP ID (e.g., `traffic.au 12345 Reece`). |
+| `traffic.ru <ID>` | Removes an Admin. |
+| `traffic.admins` | Lists all current admins and automatically generates their forum profile links. |
+| `traffic.lookup <Name>` | Searches for an online player by name to grab their hidden BeamMP ID. |
+
+
+## 🔧 Under the Hood (Core Functions)
+
+For developers looking to modify the script, here is a brief overview of the core logic:
+
+* **`getScaledTrafficAmount()`**: The mathematical core. Divides `maxServerTraffic` by the active player count to assign AI per player without exceeding global limits.
+* **`onPlayerAuth()` & `onPlayerJoin()`**: Catches players as they connect and puts them in a "pending" state, pausing traffic generation.
+* **`onVehicleSpawn()`**: Acts as the confirmation trigger. When a player spawns their car, the script assumes they have finished loading and begins the traffic countdown timers.
+* **`trafficManagerTick()`**: The heartbeat loop of the script. It checks the system time against active timers and triggers chat warnings or client-side spawn events when clocks hit zero.
