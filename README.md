@@ -9,7 +9,7 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 * **Dynamic Scaling:** Automatically divides the server's maximum traffic limit by the number of active players.
 * **Waiting Room Logic:** Pauses AI generation while players are downloading mods or syncing.
 * **Traffic Ghosting:** Optional anti-grief/anti-crash protection that disables collisions for AI vehicles.
-* **Persistent Admins:** Saves authorized traffic admins to a local `.txt` file so they survive server restarts.
+* **Persistent Settings:** Saves authorized traffic amounts and admins to a local `settings.txt` file so they survive server restarts.
 
 
 ## 💾 Installation
@@ -17,13 +17,14 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 1. Download the `Latest` Release.
 2. Place the zip in your BeamMP Server directory.
 3. Extract and it will create the directory: `Resources/Server/CareerMPTraffic/main.lua` & `Resources/Client/CareerMPTraffic.zip`
-4. Start your server. The script will automatically generate the `TrafficAdmins.txt` file on the first run.
-5. Use the server console to add your first admin (see Commands below).
+4. Start your server. The script will automatically generate the `settings.txt` file on the first run.
+5. Edit the amount of AI in the `Settings.txt` file or by using the commands listed below!
+6. Use the server console to add your first admin (see Commands below).
 
 
 ## ⚙️ Configuration & Timers
 
-All settings are located in the `Config` table at the top of `main.lua`. You can adjust these to fit your server's hardware capabilities.
+All **Default** settings and messages are located in the `Config` table at the top of `main.lua`. (Only edit the messages here as we now use `settings.txt` for AI amounts ect)
 
 ### General Settings
 | Variable | Default | Description |
@@ -63,13 +64,17 @@ All settings are located in the `Config` table at the top of `main.lua`. You can
 ### Server Console Commands
 Admin management and player lookups are handled securely via the server console.
 
-| Command | Description |
-| :--- | :--- |
-| `traffic.help` | Lists all available console commands. |
-| `traffic.au <ID> <Name>` | Adds a new Admin using their BeamMP ID (e.g., `traffic.au 12345 Reece`). |
-| `traffic.ru <ID>` | Removes an Admin. |
-| `traffic.admins` | Lists all current admins and automatically generates their forum profile links. |
-| `traffic.lookup <Name>` | Searches for an online player by name to grab their hidden BeamMP ID. |
+| Command | Description
+| :--- | :---:
+|  `traffic.help (traffic.h)` | Show the help menu.
+|  `traffic.status (traffic.s)`| View current traffic settings.
+|  `traffic.au <ID> <Name>` | Adds a new Admin using their BeamMP ID (e.g., traffic.au 12345 Reece).
+|  `traffic.ru <ID>` | Removes an Admin.
+|  `traffic.admins` | Lists all current admins and automatically generates their forum profile links.
+|  `traffic.lookup <Name>` | Find online player's ID & link.
+|  `traffic.ghosting <on/off>` | Toggle traffic collisions.
+|  `traffic.maxaipp <number>` | Set max AI cars per player.
+|  `traffic.maxtraffic <number>` |Set max total AI cars on server.
 
 
 ## 🔧 Under the Hood (Core Functions)
