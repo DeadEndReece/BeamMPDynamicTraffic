@@ -24,7 +24,7 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 
 ## ⚙️ Configuration & Timers
 
-All **Default** settings and messages are located in the `Config` table at the top of `main.lua`. (Only edit the messages here as we now use `settings.txt` for AI amounts ect)
+All **Default** settings and messages are located in the `Config` table at the top of `main.lua`. (Only edit the messages and timers here as we now use `settings.txt` for AI amounts ect)
 
 ### General Settings
 | Variable | Default | Description |
