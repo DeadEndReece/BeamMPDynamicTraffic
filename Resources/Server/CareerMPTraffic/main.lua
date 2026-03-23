@@ -9,37 +9,44 @@ local Config = {
   aisPerPlayer = 1, -- Maximum AI vehicles per player (e.g., 1 means 1 AI per player, so 5 players = 5 AI)
   maxServerTraffic = 8, -- Absolute cap on total AI vehicles regardless of player count (e.g., 8 means no more than 8 AI on the server at once)
   trafficGhosting     = true, -- Toggle for anti-explosion protection (False = cars are solid, True = cars will pass through players)
-
-  -- Timers (in seconds)
-  timerFirstPlayer  = 30, -- Time to wait after the first player spawns before generating traffic (if no one else is loading)
-  timerPlayerJoin   = 120, -- Time to wait after a new player joins before respawning traffic (if server is already populated)
-  timerPlayerLeave  = 30, -- Time to wait after a player leaves before respawning traffic with the new player count
-  timerAdminRefresh = 30,  -- Time to wait after an admin forces a refresh
-
-  -- Chat Messages (Use %s for names, %d for numbers)
+  -- ==========================================
+  -- TIMERS & DELAYS
+  -- ==========================================
+  tickRate            = 1000, -- (Milliseconds) How often the main traffic loop runs
+  -- Core Logic (Seconds)
+  timerFirstPlayer    = 30,  -- Time to wait after the first player spawns before generating traffic (if no one else is loading)
+  timerPlayerJoin     = 120, -- Time to wait after a new player joins before respawning traffic (if server is already populated)
+  timerPlayerLeave    = 60,  -- Time to wait after a player leaves before respawning traffic with the new player count
+  timerAdminRefresh   = 30,  -- Time to wait after an admin forces a refresh
+  timerPendingTimeout = 300, -- Maximum time a player can stay in "pending" state before being ignored by the traffic spawner
+  -- Warnings (Seconds)
+  timerWarningLong    = 60,  -- Long warning threshold for traffic respawns
+  timerWarningShort   = 10,   -- Short warning threshold right before traffic spawns
+  -- ================================================
+  -- CHAT MESSAGES (Use %s for names, %d for numbers)
+  -- ================================================
   msgFirstPlayerWait  = "^l^e[Traffic] ^fFirst player loaded! - Traffic will generate in ^c%d seconds...",
   msgPendingPlayer    = "^l^e[Traffic] ^f%s is downloading/loading! Pausing traffic spawn...", 
   msgExtendTimer      = "^l^e[Traffic] ^fAnother player is loading in! Delaying traffic generation by ^c%d seconds...",
-  msgFirstPlayer5s    = "^l^e[Traffic] ^fTraffic generating in ^c5 seconds...",
+  msgFirstPlayerWarn  = "^l^e[Traffic] ^fTraffic generating in ^c%d seconds...",
   
   msgPlayerJoinReset  = "^l^e[Traffic] ^f%s Joined! - Traffic Spawning ^cCancelled ^fand ^crecalculating.",
   msgPlayerJoinWait   = "^l^e[Traffic] ^f%s Joined - Traffic has been ^cDeleted ^fwhilst the server ^crecalculates!",
   
   msgPlayerLeaveWait  = "^l^e[Traffic] ^fA player left. - Traffic ^cDeleted. ^fRespawning in ^c%d seconds...",
   
-  msgQueue1Min        = "^l^e[Traffic] ^fTraffic Recalculated, Respawning in 1 min.",
-  msgQueue5s          = "^l^e[Traffic] ^fRespawning traffic in ^c5 seconds... Find a safe location!",
+  msgQueueLongWarn    = "^l^e[Traffic] ^fTraffic Recalculated, Respawning in %d seconds.",
+  msgQueueShortWarn   = "^l^e[Traffic] ^fRespawning traffic in ^c%d seconds... Find a safe location!",
   
   msgTrafficSpawned   = "^l^e[Traffic] ^fTraffic spawned ^c(%d per player).",
   
   msgAdminRefreshWait = "^l^e[Traffic] ^fAdmin %s forced a traffic refresh. ^cRespawning in %d seconds...",
   msgNoPermission     = "^l^cYou do not have permission to use admin commands.",
 }
-
--- ================================
+-- =====================================================================
 -- INTERNAL STATES & DATA DONT TOUCH UNLESS YOU KNOW WHAT YOU ARE DOING!
--- ================================
-local dataPath = "Resources/Server/CareerMPTraffic/TrafficAdmins.txt"
+-- =====================================================================
+local settingsPath = "Resources/Server/CareerMPTraffic/settings.txt"
 local TRAFFIC_ADMINS = {}
 
 local pendingPlayers = {} 
@@ -65,42 +72,61 @@ local recalc5sWarning = false
 local function logInfo(msg)
   print("[CareerMPTraffic] " .. tostring(msg))
 end
-
--- ==========================================
--- ADMIN PERSISTENCE
--- ==========================================
-function LoadTrafficAdmins()
+-- ===================================
+-- SETTINGS PERSISTENCE (Unified File)
+-- ===================================
+function LoadSettings()
     TRAFFIC_ADMINS = {}
-    local file = io.open(dataPath, "r")
+    local file = io.open(settingsPath, "r")
     if file then
-        local count = 0
+        local adminCount = 0
         for line in file:lines() do
-            local id, name = line:match("([^=]+)=(.+)")
-            if id and name then
-                TRAFFIC_ADMINS[id] = name
-                count = count + 1 
+            if not line:match("^%[") and line:match("=") then
+                local key, value = line:match("([^=]+)=(.+)")
+                if key and value then
+                    key = key:match("^%s*(.-)%s*$")
+                    value = value:match("^%s*(.-)%s*$")
+                    
+                    if key == "aisPerPlayer" then 
+                        Config.aisPerPlayer = tonumber(value) or Config.aisPerPlayer
+                    elseif key == "maxServerTraffic" then 
+                        Config.maxServerTraffic = tonumber(value) or Config.maxServerTraffic
+                    elseif key == "trafficGhosting" then 
+                        Config.trafficGhosting = (value == "true")
+                    else
+                        TRAFFIC_ADMINS[key] = value
+                        adminCount = adminCount + 1 
+                    end
+                end
             end
         end
         file:close()
-        logInfo("Loaded " .. count .. " admins from data file.")
+        logInfo("Loaded config overrides and " .. adminCount .. " admins from settings.txt")
     else
-        logInfo("No admins file found. Use the server console command 'traffic.au <ID> <Name>' to add your first admin!")
+        logInfo("No settings.txt found. Creating a new one with default values...")
+        SaveSettings()
     end
 end
 
-function SaveTrafficAdmins()
-    local file = io.open(dataPath, "w")
+function SaveSettings()
+    local file = io.open(settingsPath, "w")
     if file then
+        file:write("[Config]\n")
+        file:write("aisPerPlayer=" .. Config.aisPerPlayer .. "\n")
+        file:write("maxServerTraffic=" .. Config.maxServerTraffic .. "\n")
+        file:write("trafficGhosting=" .. tostring(Config.trafficGhosting) .. "\n")
+        file:write("\n")
+        
+        file:write("[Admins]\n")
         for id, name in pairs(TRAFFIC_ADMINS) do
             file:write(id .. "=" .. name .. "\n")
         end
         file:close()
     end
 end
-
--- ==========================================
+-- ==================
 -- CORE TRAFFIC LOGIC
--- ==========================================
+-- ==================
 local function getPlayerCount(isDisconnecting)
   local n = 0
   if MP and MP.GetPlayers then
@@ -125,7 +151,6 @@ local function getScaledTrafficAmount(isDisconnecting)
   if amount < 1 then amount = 1 end
   return amount
 end
-
 -- --- The Waiting Room ---
 function onPlayerAuth(playerName, playerRole, isGuest, ip)
   if playerName then
@@ -159,7 +184,6 @@ function onVehicleSpawn(playerId, vehicleId, data)
     if not fullyJoinedPlayers[playerName] then
       fullyJoinedPlayers[playerName] = true
       
-      -- Send current ghosting state to the newly joined player
       MP.TriggerClientEvent(playerId, "setTrafficGhosting", Config.trafficGhosting and "1" or "0")
       
       if pendingPlayers[playerName] then
@@ -249,7 +273,7 @@ function trafficManagerTick()
   if firstPlayerSpawning then
     local pendingCount = 0
     for name, authTime in pairs(pendingPlayers) do
-      if (currentTime - authTime) < 300 then 
+      if (currentTime - authTime) < Config.timerPendingTimeout then 
         pendingCount = pendingCount + 1
       else
         pendingPlayers[name] = nil
@@ -262,9 +286,9 @@ function trafficManagerTick()
     else
       local timeLeft = firstPlayerTimer - currentTime
       
-      if timeLeft <= 5 and not firstPlayer5sWarning then
+      if timeLeft <= Config.timerWarningShort and not firstPlayer5sWarning then
          firstPlayer5sWarning = true
-         MP.SendChatMessage(-1, Config.msgFirstPlayer5s)
+         MP.SendChatMessage(-1, string.format(Config.msgFirstPlayerWarn, Config.timerWarningShort))
       end
 
       if timeLeft <= 0 then
@@ -282,9 +306,9 @@ function trafficManagerTick()
   if recalcSpawning then
     local timeLeft = recalcTimer - currentTime
     
-    if timeLeft <= 5 and not recalc5sWarning then
+    if timeLeft <= Config.timerWarningShort and not recalc5sWarning then
        recalc5sWarning = true
-       MP.SendChatMessage(-1, Config.msgQueue5s)
+       MP.SendChatMessage(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
     end
 
     if timeLeft <= 0 then
@@ -298,14 +322,14 @@ function trafficManagerTick()
   if isCountingDown and trafficPaused then
     local timeLeft = respawnTimer - currentTime
 
-    if timeLeft <= 60 and not oneMinuteWarningSent then
+    if timeLeft <= Config.timerWarningLong and not oneMinuteWarningSent then
        oneMinuteWarningSent = true
-       MP.SendChatMessage(-1, Config.msgQueue1Min)
+       MP.SendChatMessage(-1, string.format(Config.msgQueueLongWarn, Config.timerWarningLong))
     end
 
-    if timeLeft <= 5 and not join5sWarning then
+    if timeLeft <= Config.timerWarningShort and not join5sWarning then
        join5sWarning = true
-       MP.SendChatMessage(-1, Config.msgQueue5s)
+       MP.SendChatMessage(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
     end
 
     if timeLeft <= 0 then
@@ -320,11 +344,11 @@ function trafficManagerTick()
   end
 end
 MP.RegisterEvent("TrafficManagerTick", "trafficManagerTick")
-MP.CreateEventTimer("TrafficManagerTick", 1000)
+MP.CreateEventTimer("TrafficManagerTick", Config.tickRate)
 
--- ==========================================
+-- =============
 -- CHAT COMMANDS
--- ==========================================
+-- =============
 function onChatMessage(senderId, senderName, message)
   local msg = tostring(message or "")
   local args = {}
@@ -333,21 +357,18 @@ function onChatMessage(senderId, senderName, message)
   
   local cmd = args[1]:lower()
 
-  -- Identity Verification for the few in-game commands left
   local identifiers = MP.GetPlayerIdentifiers(senderId)
   local beammp_id = identifiers and tostring(identifiers.beammp) or nil
 
-  -- Auto-Update Admin Usernames!
   if beammp_id and TRAFFIC_ADMINS[beammp_id] then
       if TRAFFIC_ADMINS[beammp_id] ~= senderName then
           TRAFFIC_ADMINS[beammp_id] = senderName
-          SaveTrafficAdmins()
+          SaveSettings()
       end
   end
   
   local isAdmin = (beammp_id and TRAFFIC_ADMINS[beammp_id] ~= nil)
 
-  -- Process In-Game Traffic Admin Commands
   if cmd == "/traffic" then
       if not isAdmin then
           MP.SendChatMessage(senderId, Config.msgNoPermission)
@@ -396,6 +417,7 @@ function onChatMessage(senderId, senderName, message)
               local num = tonumber(args[3])
               if num and num >= 1 then
                   Config.aisPerPlayer = math.floor(num)
+                  SaveSettings() 
                   MP.SendChatMessage(senderId, "^l^cMax AI per player updated to: " .. Config.aisPerPlayer .. ". Use ^b/traffic refresh ^cwhen ready.")
                   logInfo(senderName .. " changed maxaipp to " .. Config.aisPerPlayer)
               else
@@ -411,6 +433,7 @@ function onChatMessage(senderId, senderName, message)
               local num = tonumber(args[3])
               if num and num >= 1 then
                   Config.maxServerTraffic = math.floor(num)
+                  SaveSettings() 
                   MP.SendChatMessage(senderId, "^l^cMax total server traffic updated to: " .. Config.maxServerTraffic .. ". Use ^b/traffic refresh ^cwhen ready.")
                   logInfo(senderName .. " changed maxtraffic to " .. Config.maxServerTraffic)
               else
@@ -426,12 +449,14 @@ function onChatMessage(senderId, senderName, message)
               local state = args[3]:lower()
               if state == "on" or state == "1" or state == "true" then
                   Config.trafficGhosting = true
+                  SaveSettings() 
                   MP.TriggerClientEvent(-1, "setTrafficGhosting", "1")
                   MP.TriggerClientEvent(-1, "showGhostingMessage", "1")
                   MP.SendChatMessage(senderId, "^l^cTraffic ghosting ENABLED. Cars will pass through players.")
                   logInfo(senderName .. " ENABLED traffic ghosting via chat.")
               elseif state == "off" or state == "0" or state == "false" then
                   Config.trafficGhosting = false
+                  SaveSettings() 
                   MP.TriggerClientEvent(-1, "setTrafficGhosting", "0")
                   MP.TriggerClientEvent(-1, "showGhostingMessage", "0")
                   MP.SendChatMessage(senderId, "^l^cTraffic ghosting DISABLED. Cars are now solid.")
@@ -463,11 +488,9 @@ function onChatMessage(senderId, senderName, message)
   return 0
 end
 MP.RegisterEvent("onChatMessage", "onChatMessage")
-
--- ==========================================
+-- =======================
 -- SERVER CONSOLE COMMANDS
--- ==========================================
--- Admin management and lookups are securely handled here!
+-- =======================
 function onConsoleTrafficInput(cmd)
     local rawInput = cmd:match("^%s*(.-)%s*$")
     local args = {}
@@ -502,7 +525,7 @@ function onConsoleTrafficInput(cmd)
             local id = args[2]
             local name = table.concat(args, " ", 3)
             TRAFFIC_ADMINS[id] = name
-            SaveTrafficAdmins()
+            SaveSettings()
             logInfo("Added Admin: ID '" .. id .. "' | Name: '" .. name .. "'")
         else
             logInfo("Usage: traffic.au <ID> <Name>")
@@ -515,7 +538,7 @@ function onConsoleTrafficInput(cmd)
             if TRAFFIC_ADMINS[id] then
                 local removedName = TRAFFIC_ADMINS[id]
                 TRAFFIC_ADMINS[id] = nil
-                SaveTrafficAdmins()
+                SaveSettings()
                 logInfo("Removed Admin: ID '" .. id .. "' | Name: '" .. tostring(removedName) .. "'")
             else
                 logInfo("Error: Could not find an admin with ID '" .. id .. "'")
@@ -572,11 +595,13 @@ function onConsoleTrafficInput(cmd)
             local state = args[2]:lower()
             if state == "on" or state == "1" or state == "true" then
                 Config.trafficGhosting = true
+                SaveSettings() 
                 MP.TriggerClientEvent(-1, "setTrafficGhosting", "1")
                 MP.TriggerClientEvent(-1, "showGhostingMessage", "1")
                 logInfo("Traffic ghosting ENABLED. Cars will pass through players.")
             elseif state == "off" or state == "0" or state == "false" then
                 Config.trafficGhosting = false
+                SaveSettings() 
                 MP.TriggerClientEvent(-1, "setTrafficGhosting", "0")
                 MP.TriggerClientEvent(-1, "showGhostingMessage", "0")
                 logInfo("Traffic ghosting DISABLED. Cars are now solid.")
@@ -594,6 +619,7 @@ function onConsoleTrafficInput(cmd)
             local num = tonumber(args[2])
             if num and num >= 1 then
                 Config.aisPerPlayer = math.floor(num)
+                SaveSettings() 
                 logInfo("Max AI per player updated to: " .. Config.aisPerPlayer .. ". (Use /traffic refresh in-game to apply)")
             else
                 logInfo("Usage: traffic.maxaipp <number> (Must be 1 or higher)")
@@ -609,6 +635,7 @@ function onConsoleTrafficInput(cmd)
             local num = tonumber(args[2])
             if num and num >= 1 then
                 Config.maxServerTraffic = math.floor(num)
+                SaveSettings() 
                 logInfo("Max total server traffic updated to: " .. Config.maxServerTraffic .. ". (Use /traffic refresh in-game to apply)")
             else
                 logInfo("Usage: traffic.maxtraffic <number> (Must be 1 or higher)")
@@ -621,12 +648,11 @@ function onConsoleTrafficInput(cmd)
     end
 end
 MP.RegisterEvent("onConsoleInput", "onConsoleTrafficInput")
-
 -- ==========================================
 -- SCRIPT INITIALIZATION (The No Vehicle Fix)
 -- ==========================================
 local function initExistingPlayers()
-  LoadTrafficAdmins()
+  LoadSettings() -- Loads both Admins and Config Variables!
   
   if MP and MP.GetPlayers then
     local ok, players = pcall(MP.GetPlayers)
