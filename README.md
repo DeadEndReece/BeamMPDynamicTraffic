@@ -1,4 +1,4 @@
-# 🚦 BeamMP Dynamic AI Traffic Module
+# 🚦 CareerMP Dynamic AI Traffic Module
 
 A dynamic server and client module for BeamMP that intelligently manages AI traffic spawning based on active player counts. 
 
@@ -16,12 +16,11 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 
 1. Download the `Latest` Release.
 2. Place the zip in your BeamMP Server directory.
-3. Extract and it will create the directory: `Resources/Server/BeamMPTraffic/main.lua` & `Resources/Client/BeamMPTraffic.zip`
+3. Extract and it will create the directory: `Resources/Server/CareerMPTraffic/main.lua` & `Resources/Client/CareerMPTraffic.zip`
 4. Start your server. The script will automatically generate the `settings.txt` file on the first run.
 5. Edit the amount of AI in the `Settings.txt` file or by using the commands listed below!
 6. Use the server console to add your first admin (see Commands below).
 
-**NOTE**: To use this in **CareerMP** You have to edit `line 57` in CareerMP.zip `resources/client/CareerMP/lua/ge/extensions/career/modules/playerdriving.lua` From `amount = clamp(amount, 2, 2) -- at least 2 vehicles should get spawned` to `amount = clamp(amount, 1, X)` (**X** Being the max you want a player to spawn)
 
 ## ⚙️ Configuration & Timers
 

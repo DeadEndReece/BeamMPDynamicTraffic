@@ -1,4 +1,4 @@
-log("I", "BeamMPTraffic", "Loading /scripts/modScript.lua")
+log("I", "CareerMPTraffic", "Loading /scripts/modScript.lua")
 load("AITrafficSpawner")
 setExtensionUnloadMode("AITrafficSpawner", "manual")
-log("I", "BeamMPTraffic", "Loaded AITrafficSpawner via modScript")
+log("I", "CareerMPTraffic", "Loaded AITrafficSpawner via modScript")
