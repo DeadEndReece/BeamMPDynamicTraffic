@@ -1,4 +1,4 @@
-# 🚦 CareerMP Dynamic AI Traffic Module
+# 🚦 CareerMP Dynamic AI Traffic Module (max 50 cars set in PlayerDriving.lua)
 
 A dynamic server and client module for BeamMP that intelligently manages AI traffic spawning based on active player counts. 
 
