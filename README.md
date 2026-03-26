@@ -21,9 +21,6 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 5. Edit the amount of AI in the `Settings.txt` file or by using the commands listed below!
 6. Use the server console to add your first admin (see Commands below).
 
-**NOTES**: To use this in **CareerMP** You have to edit `line 57` in CareerMP.zip `resources/client/CareerMP/lua/ge/extensions/career/modules/playerdriving.lua` From `amount = clamp(amount, 2, 2) -- at least 2 vehicles should get spawned` to `amount = clamp(amount, 1, X)` (**X** Being the max you want a player to spawn)
-Check your ingame Gameplay settings if less cars are spawning with whats set in the cofig!
-
 ## ⚙️ Configuration & Timers
 
 All **Default** settings and messages are located in the `Config` table at the top of `main.lua`. (Only edit the messages and timers here as we now use `settings.txt` for AI amounts ect)
