@@ -22,7 +22,8 @@ This script features a "waiting room" mechanism to prevent traffic from generati
 6. Use the server console to add your first admin (see Commands below).
 
 **NOTES**: To use this in **CareerMP** You have to edit `line 57` in CareerMP.zip `resources/client/CareerMP/lua/ge/extensions/career/modules/playerdriving.lua` From `amount = clamp(amount, 2, 2) -- at least 2 vehicles should get spawned` to `amount = clamp(amount, 1, X)` (**X** Being the max you want a player to spawn)
-Check your ingame Gameplay settings if less cars are spawning with whats set in the cofig!
+
+Check your ingame Gameplay settings if less cars are spawning with whats set in the config!
 
 
 
