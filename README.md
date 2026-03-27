@@ -27,7 +27,8 @@ A server/client BeamMP traffic module for CareerMP that scales AI traffic by pla
 
 ## CareerMP Setup Note
 
-To use this properly with CareerMP, edit `playerdriving.lua` inside CareerMP so the traffic clamp allows the amount you want. For example, change the hard clamp from a fixed value to the maximum number you want a player to be able to spawn.
+To use this properly with CareerMP, edit `playerdriving.lua` inside Client\CareerMP.zip\lua\ge\extensions\career\modules\playerDriving.lua `Line 57` <img width="649" height="22" alt="image" src="https://github.com/user-attachments/assets/dcca5fb7-ba6d-4c76-97b8-1181c554887d" />
+ so the traffic clamp allows the amount you want. For example, change the hard clamp from a fixed value to the maximum number you want a player to be able to spawn.
 
 If fewer cars are spawning than expected, also check the in-game Gameplay traffic settings on the client.
 
