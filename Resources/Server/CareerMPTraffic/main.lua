@@ -7,6 +7,7 @@ local Config = {
   aisPerPlayer = 1,
   maxServerTraffic = 8,
   trafficGhosting = true,
+  trafficSpawnWarnings = true,
   missionExitHideDuration = 10,
 
   tickRate = 1000,
@@ -138,7 +139,14 @@ local function sendClientPayload(targetId, eventName, payload)
   end
 end
 
+local function sendTrafficWarningChat(targetId, message)
+  if not Config.trafficSpawnWarnings then return end
+  if not (MP and MP.SendChatMessage) then return end
+  MP.SendChatMessage(targetId, message)
+end
+
 local function broadcastTrafficSpawnCountdown(seconds)
+  if not Config.trafficSpawnWarnings then return end
   if not (MP and MP.TriggerClientEvent) then return end
   if not seconds or seconds < 1 then return end
   MP.TriggerClientEvent(-1, "showTrafficSpawnCountdown", tostring(seconds))
@@ -298,6 +306,8 @@ function LoadSettings()
             Config.maxServerTraffic = tonumber(value) or Config.maxServerTraffic
           elseif key == "trafficGhosting" then
             Config.trafficGhosting = (value == "true")
+          elseif key == "trafficSpawnWarnings" then
+            Config.trafficSpawnWarnings = (value == "true")
           else
             TRAFFIC_ADMINS[key] = value
             adminCount = adminCount + 1
@@ -322,6 +332,7 @@ function SaveSettings()
     file:write("aisPerPlayer=" .. Config.aisPerPlayer .. "\n")
     file:write("maxServerTraffic=" .. Config.maxServerTraffic .. "\n")
     file:write("trafficGhosting=" .. tostring(Config.trafficGhosting) .. "\n")
+    file:write("trafficSpawnWarnings=" .. tostring(Config.trafficSpawnWarnings) .. "\n")
     file:write("\n")
 
     file:write("[Admins]\n")
@@ -383,7 +394,7 @@ function onPlayerAuth(playerName, playerRole, isGuest, ip)
     firstPlayerTimer = os.time() + Config.timerFirstPlayer
     firstPlayer5sWarning = false
     firstPlayerCountdownValue = nil
-    MP.SendChatMessage(-1, string.format(Config.msgPendingPlayer, playerName))
+    sendTrafficWarningChat(-1, string.format(Config.msgPendingPlayer, playerName))
   end
 end
 MP.RegisterEvent("onPlayerAuth", "onPlayerAuth")
@@ -422,12 +433,12 @@ function onVehicleSpawn(playerId, vehicleId, data)
           firstPlayer5sWarning = false
           firstPlayerCountdownValue = nil
           logInfo("First player spawned. Waiting for NavGraph...")
-          MP.SendChatMessage(-1, string.format(Config.msgFirstPlayerWait, Config.timerFirstPlayer))
+          sendTrafficWarningChat(-1, string.format(Config.msgFirstPlayerWait, Config.timerFirstPlayer))
         else
           firstPlayerTimer = os.time() + Config.timerFirstPlayer
           firstPlayer5sWarning = false
           firstPlayerCountdownValue = nil
-          MP.SendChatMessage(-1, string.format(Config.msgExtendTimer, Config.timerFirstPlayer))
+          sendTrafficWarningChat(-1, string.format(Config.msgExtendTimer, Config.timerFirstPlayer))
         end
       else
         recalcSpawning = false
@@ -440,14 +451,14 @@ function onVehicleSpawn(playerId, vehicleId, data)
           oneMinuteWarningSent = false
           join5sWarning = false
           joinCountdownValue = nil
-          MP.SendChatMessage(-1, string.format(Config.msgPlayerJoinReset, playerName))
+          sendTrafficWarningChat(-1, string.format(Config.msgPlayerJoinReset, playerName))
         else
           isCountingDown = true
           respawnTimer = os.time() + Config.timerPlayerJoin
           oneMinuteWarningSent = false
           join5sWarning = false
           joinCountdownValue = nil
-          MP.SendChatMessage(-1, string.format(Config.msgPlayerJoinWait, playerName))
+          sendTrafficWarningChat(-1, string.format(Config.msgPlayerJoinWait, playerName))
         end
       end
     end
@@ -489,7 +500,7 @@ function onPlayerDisconnect(playerId)
       recalcCountdownValue = nil
 
       clearTrafficForClients()
-      MP.SendChatMessage(-1, string.format(Config.msgPlayerLeaveWait, Config.timerPlayerLeave))
+      sendTrafficWarningChat(-1, string.format(Config.msgPlayerLeaveWait, Config.timerPlayerLeave))
     elseif not wasFullyJoined then
       logInfo("A pending player disconnected before syncing. Ignoring traffic recalculation.")
     end
@@ -596,7 +607,7 @@ function trafficManagerTick()
 
       if timeLeft <= Config.timerWarningShort and not firstPlayer5sWarning then
         firstPlayer5sWarning = true
-        MP.SendChatMessage(-1, string.format(Config.msgFirstPlayerWarn, Config.timerWarningShort))
+        sendTrafficWarningChat(-1, string.format(Config.msgFirstPlayerWarn, Config.timerWarningShort))
       end
 
       if timeLeft <= SPAWN_COUNTDOWN_START and timeLeft > 0 and firstPlayerCountdownValue ~= timeLeft then
@@ -611,7 +622,7 @@ function trafficManagerTick()
 
         local amount = getScaledTrafficAmount(false)
         spawnTrafficForClients(amount)
-        MP.SendChatMessage(-1, string.format(Config.msgTrafficSpawned, amount))
+        sendTrafficWarningChat(-1, string.format(Config.msgTrafficSpawned, amount))
       end
     end
   end
@@ -621,7 +632,7 @@ function trafficManagerTick()
 
     if timeLeft <= Config.timerWarningShort and not recalc5sWarning then
       recalc5sWarning = true
-      MP.SendChatMessage(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
+      sendTrafficWarningChat(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
     end
 
     if timeLeft <= SPAWN_COUNTDOWN_START and timeLeft > 0 and recalcCountdownValue ~= timeLeft then
@@ -633,7 +644,7 @@ function trafficManagerTick()
       recalcSpawning = false
       recalcCountdownValue = nil
       spawnTrafficForClients(recalcAmount)
-      MP.SendChatMessage(-1, string.format(Config.msgTrafficSpawned, recalcAmount))
+      sendTrafficWarningChat(-1, string.format(Config.msgTrafficSpawned, recalcAmount))
     end
   end
 
@@ -642,12 +653,12 @@ function trafficManagerTick()
 
     if timeLeft <= Config.timerWarningLong and not oneMinuteWarningSent then
       oneMinuteWarningSent = true
-      MP.SendChatMessage(-1, string.format(Config.msgQueueLongWarn, Config.timerWarningLong))
+      sendTrafficWarningChat(-1, string.format(Config.msgQueueLongWarn, Config.timerWarningLong))
     end
 
     if timeLeft <= Config.timerWarningShort and not join5sWarning then
       join5sWarning = true
-      MP.SendChatMessage(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
+      sendTrafficWarningChat(-1, string.format(Config.msgQueueShortWarn, Config.timerWarningShort))
     end
 
     if timeLeft <= SPAWN_COUNTDOWN_START and timeLeft > 0 and joinCountdownValue ~= timeLeft then
@@ -662,7 +673,7 @@ function trafficManagerTick()
 
       local amount = getScaledTrafficAmount(false)
       spawnTrafficForClients(amount)
-      MP.SendChatMessage(-1, string.format(Config.msgTrafficSpawned, amount))
+      sendTrafficWarningChat(-1, string.format(Config.msgTrafficSpawned, amount))
     end
   end
 end
@@ -711,7 +722,7 @@ function onChatMessage(senderId, senderName, message)
       recalcCountdownValue = nil
 
       clearTrafficForClients()
-      MP.SendChatMessage(-1, string.format(Config.msgAdminRefreshWait, senderName, Config.timerAdminRefresh))
+      sendTrafficWarningChat(-1, string.format(Config.msgAdminRefreshWait, senderName, Config.timerAdminRefresh))
       return 1
 
     elseif action == "status" then
@@ -719,6 +730,7 @@ function onChatMessage(senderId, senderName, message)
       MP.SendChatMessage(senderId, "^fMax AI per player: ^c" .. Config.aisPerPlayer)
       MP.SendChatMessage(senderId, "^fMax server traffic: ^c" .. Config.maxServerTraffic)
       MP.SendChatMessage(senderId, "^fGhosting (No Collision): ^c" .. (Config.trafficGhosting and "ON" or "OFF"))
+      MP.SendChatMessage(senderId, "^fSpawn warnings: ^c" .. (Config.trafficSpawnWarnings and "ON" or "OFF"))
       MP.SendChatMessage(senderId, "^fCurrent Active Target: ^c" .. getScaledTrafficAmount(false) .. " per player")
       return 1
 
@@ -729,6 +741,7 @@ function onChatMessage(senderId, senderName, message)
       MP.SendChatMessage(senderId, "^c/traffic maxaipp ^f(^cnum^f) - Set max AI per player")
       MP.SendChatMessage(senderId, "^c/traffic maxtraffic ^f(^cnum^f) - Set max total server AI")
       MP.SendChatMessage(senderId, "^c/traffic ghosting ^f(^con^f|^coff^f) - Toggle traffic collisions")
+      MP.SendChatMessage(senderId, "^c/traffic warnings ^f(^con^f|^coff^f) - Toggle traffic spawn warnings")
       MP.SendChatMessage(senderId, "^f(^cAdmin management and player lookups are console-only^f)")
       return 1
 
@@ -790,6 +803,28 @@ function onChatMessage(senderId, senderName, message)
       end
       return 1
 
+    elseif action == "warnings" then
+      if args[3] then
+        local state = args[3]:lower()
+        if state == "on" or state == "1" or state == "true" then
+          Config.trafficSpawnWarnings = true
+          SaveSettings()
+          MP.SendChatMessage(senderId, "^l^cTraffic spawn warnings ENABLED.")
+          logInfo(senderName .. " ENABLED traffic spawn warnings via chat.")
+        elseif state == "off" or state == "0" or state == "false" then
+          Config.trafficSpawnWarnings = false
+          SaveSettings()
+          MP.SendChatMessage(senderId, "^l^cTraffic spawn warnings DISABLED.")
+          logInfo(senderName .. " DISABLED traffic spawn warnings via chat.")
+        else
+          MP.SendChatMessage(senderId, "^l^cUsage: /traffic warnings <on|off>")
+        end
+      else
+        MP.SendChatMessage(senderId, "^l^cTraffic spawn warnings are currently: " .. (Config.trafficSpawnWarnings and "ON" or "OFF"))
+        MP.SendChatMessage(senderId, "^l^cUsage: /traffic warnings <on|off>")
+      end
+      return 1
+
     else
       MP.SendChatMessage(senderId, "^l^cUnknown traffic command. Type ^b/traffic help ^cfor options.")
       return 1
@@ -825,6 +860,7 @@ function onConsoleTrafficInput(cmd)
     logInfo("traffic.admins                - List current Admins")
     logInfo("traffic.lookup <Name>         - Find online player's ID & link")
     logInfo("traffic.ghosting <on|off>     - Toggle traffic collisions")
+    logInfo("traffic.warnings <on|off>     - Toggle traffic spawn warnings")
     logInfo("traffic.maxaipp <number>      - Set max AI cars per player")
     logInfo("traffic.maxtraffic <number>   - Set max total AI cars on server")
     return ""
@@ -834,6 +870,7 @@ function onConsoleTrafficInput(cmd)
     logInfo("Max AI per player: " .. Config.aisPerPlayer)
     logInfo("Max server traffic: " .. Config.maxServerTraffic)
     logInfo("Ghosting (No Collision): " .. (Config.trafficGhosting and "ON" or "OFF"))
+    logInfo("Spawn warnings: " .. (Config.trafficSpawnWarnings and "ON" or "OFF"))
     logInfo("Current Active Target: " .. getScaledTrafficAmount(false) .. " per player")
     return ""
 
@@ -930,6 +967,26 @@ function onConsoleTrafficInput(cmd)
     else
       logInfo("Ghosting is currently: " .. (Config.trafficGhosting and "ON" or "OFF"))
       logInfo("Usage: traffic.ghosting <on|off>")
+    end
+    return ""
+
+  elseif command == "traffic.warnings" or command == "traffic.w" then
+    if #args >= 2 then
+      local state = args[2]:lower()
+      if state == "on" or state == "1" or state == "true" then
+        Config.trafficSpawnWarnings = true
+        SaveSettings()
+        logInfo("Traffic spawn warnings ENABLED.")
+      elseif state == "off" or state == "0" or state == "false" then
+        Config.trafficSpawnWarnings = false
+        SaveSettings()
+        logInfo("Traffic spawn warnings DISABLED.")
+      else
+        logInfo("Usage: traffic.warnings <on|off>")
+      end
+    else
+      logInfo("Traffic spawn warnings are currently: " .. (Config.trafficSpawnWarnings and "ON" or "OFF"))
+      logInfo("Usage: traffic.warnings <on|off>")
     end
     return ""
 

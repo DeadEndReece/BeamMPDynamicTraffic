@@ -540,7 +540,7 @@ local function showTrafficSpawnCountdown(value)
 
   local suffix = seconds == 1 and "Second" or "Seconds"
   local msg = string.format(
-    "<span style='font-size: 60px; color: #ff0000;'>Traffic Spawning In %d %s!</span>",
+    "<span style='font-size: 40px; color: #ff0000;'>Traffic Spawning In %d %s!</span>",
     seconds,
     suffix
   )

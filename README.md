@@ -6,12 +6,13 @@ A server/client BeamMP traffic module for CareerMP that scales AI traffic by pla
 
 - Dynamic traffic scaling based on active player count.
 - Waiting room logic that pauses traffic while players are still syncing or downloading.
-- Optional traffic ghosting toggle for anti-grief and anti-crash protection.
+- Optional traffic ghosting toggle for anti-grief and anti-crash protection. (V0.2)
 - Mission-aware traffic hiding so synced simple traffic does not interfere with mission gameplay.
-- Mission exit cooldown that keeps traffic hidden briefly while it disperses.
-- Spawn overlap protection with a short ghost window for freshly spawned simple traffic.
-- Simple traffic separation logic that keeps nearby AI non-collidable until they move apart.
-- In-game 5 to 1 countdown flash before traffic spawns, alongside the existing 10 second chat warning.
+- Mission exit cooldown that keeps traffic hidden briefly while it disperses. (V0.2)
+- Spawn overlap protection with a short ghost window for freshly spawned simple traffic. (V0.2)
+- Simple traffic separation logic that keeps nearby AI non-collidable until they move apart. (V0.2)
+- Toggle option for warning messages (v0.2)
+- In-game 5 to 1 countdown flash before traffic spawns, alongside the existing 10 second chat warning. 
 - Persistent server settings and admin list saved to `settings.txt`.
 
 ## Installation
@@ -41,6 +42,7 @@ Server-side settings are stored in `Resources/Server/CareerMPTraffic/settings.tx
 | :--- | :---: | :--- |
 | `aisPerPlayer` | `1` | Maximum AI vehicles allowed per player. |
 | `maxServerTraffic` | `8` | Absolute hard cap for total server traffic. |
+| `trafficSpawnWarnings` | `true` | Enable/Disables ALL warning messages! |
 | `trafficGhosting` | `true` | Global collision toggle for AI traffic. |
 
 ### Core Timers
@@ -101,6 +103,7 @@ Admin commands require the player to be added through the server console first.
 | `/traffic maxaipp <num>` | Admin | Changes the maximum AI allowed per player. |
 | `/traffic maxtraffic <num>` | Admin | Changes the absolute global AI cap. |
 | `/traffic ghosting <on/off>` | Admin | Toggles AI collisions for all players. |
+| `/traffic warnings <on/off>` | Admin | Toggle traffic spawn warnings. |
 
 ### Server Console Commands
 
@@ -115,6 +118,7 @@ Admin commands require the player to be added through the server console first.
 | `traffic.ghosting <on/off>` | Toggle traffic collisions. |
 | `traffic.maxaipp <number>` | Set max AI cars per player. |
 | `traffic.maxtraffic <number>` | Set max total AI cars on the server. |
+| `traffic.warnings <on/off)` | Toggle Message warnings. |
 
 ## Mission Behaviour
 
