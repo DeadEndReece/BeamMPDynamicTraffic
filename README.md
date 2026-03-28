@@ -33,6 +33,9 @@ To use this properly with CareerMP, edit `playerdriving.lua` inside Client\Caree
 
 If fewer cars are spawning than expected, also check the in-game Gameplay traffic settings on the client.
 
+## **RLS SERVER USE NOTE!** 
+To use CareerMP Traffic with RLS MP you need the `_NoTraffic` version of RLS https://github.com/PapiCheesecake/rls_careermp
+
 ## Configuration
 
 Server-side settings are stored in `Resources/Server/CareerMPTraffic/settings.txt`.
